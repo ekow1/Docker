@@ -14,6 +14,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Add VPS to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
+
     - name: Setup SSH
       run: |
         # Create SSH directory
@@ -35,11 +40,6 @@ jobs:
         
         # Debug: Test SSH connection with verbose output
         ssh -v ekowfirmino@gcp.ekowlabs.space "echo 'SSH connection test successful'"
-
-    - name: Add VPS to known hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
     - name: Deploy to VPS
       run: |
