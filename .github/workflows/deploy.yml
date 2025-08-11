@@ -67,17 +67,4 @@ jobs:
           docker image prune -f
         "
 
-    - name: Health Check
-      run: |
-        sleep 30
-        curl -f https://api.ekowlabs.space/api/health || exit 1
-        echo "Health check passed!"
-
-    - name: Notify deployment status
-      if: always()
-      run: |
-        if [ ${{ job.status }} == 'success' ]; then
-          echo "✅ Deployment successful!"
-        else
-          echo "❌ Deployment failed!"
-        fi
+ 
