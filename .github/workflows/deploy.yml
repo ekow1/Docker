@@ -37,7 +37,9 @@ jobs:
         ssh -v ekowfirmino@gcp.ekowlabs.space "echo 'SSH connection test successful'"
 
     - name: Add VPS to known hosts
-      run: ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
     - name: Deploy to VPS
       run: |
