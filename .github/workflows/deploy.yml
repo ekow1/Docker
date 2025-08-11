@@ -46,7 +46,7 @@ jobs:
 
     - name: Upload .env to VPS
       run: |
-        scp -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -i $HOME/.ssh/id_ed25519 .env ekowfirmino@gcp.ekowlabs.space:/tmp/.env
+        cat .env | ssh -o StrictHostKeyChecking=yes -i ~/.ssh/id_ed25519 ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
 
     - name: Deploy
       run: |
