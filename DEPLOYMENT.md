@@ -16,31 +16,34 @@ This guide explains how to deploy the Docker project to your VPS using GitHub Ac
 
 ### 1. Initial VPS Configuration
 
+**Note**: The GitHub Actions workflow now handles the initial setup automatically. However, you can still perform manual setup if needed.
+
 SSH into your VPS and run these commands:
 
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-rm get-docker.sh
-
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# Install Git
+# Install Git (required for repository cloning)
 sudo apt install git -y
 
-# Create project directory
+# Create project directory (optional - workflow will create this)
 sudo mkdir -p /opt/docker-project
 sudo chown $USER:$USER /opt/docker-project
 ```
 
-### 2. Clone Repository
+### 2. Automatic Setup via GitHub Actions
+
+The GitHub Actions workflow will automatically:
+
+1. **Create the project directory** (`/opt/docker-project`)
+2. **Clone your repository** (if not already present)
+3. **Install Docker and Docker Compose** (if not already installed)
+4. **Deploy the application**
+
+### 3. Manual Repository Setup (Alternative)
+
+If you prefer to set up the repository manually:
 
 ```bash
 cd /opt/docker-project
