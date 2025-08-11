@@ -14,79 +14,55 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH key
+    - name: Setup SSH and known_hosts
       run: |
         mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
         echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         eval "$(ssh-agent -s)"
         ssh-add ~/.ssh/id_ed25519
-
-    - name: Add server to known_hosts
-      run: |
         ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
-    - name: Test SSH connection
+    - name: Upload .env file
       run: |
-        ssh ekowfirmino@gcp.ekowlabs.space "echo 'SSH connection test OK'"
+        cat > .env <<EOF
+        MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+        MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+        NODE_ENV=${{ secrets.NODE_ENV }}
+        PORT=${{ secrets.PORT }}
+        MONGODB_URI=${{ secrets.MONGODB_URI }}
+        APP_NAME=${{ secrets.APP_NAME }}
+        EOF
+        scp .env ekowfirmino@gcp.ekowlabs.space:/tmp/.env
 
-    - name: Deploy to VPS
+    - name: Deploy
       run: |
-        # Setup project directory and deploy
-        ssh ekowfirmino@gcp.ekowlabs.space "
-          # Create project directory if it doesn't exist
+        ssh ekowfirmino@gcp.ekowlabs.space '
           sudo mkdir -p /opt/docker-project
           sudo chown ekowfirmino:ekowfirmino /opt/docker-project
-          
-          # Check if git repository exists
           if [ ! -d /opt/docker-project/.git ]; then
-            echo 'Cloning repository for the first time...'
-            cd /opt/docker-project
-            git clone https://github.com/ekowfirmino/docker.git .
+            cd /opt/docker-project && git clone https://github.com/ekowfirmino/docker.git .
           else
-            echo 'Updating existing repository...'
-            cd /opt/docker-project
-            git pull origin main
+            cd /opt/docker-project && git pull origin main
           fi
-          
-          # Create .env file from GitHub secrets
-          cat > /opt/docker-project/.env << 'EOF'
-          # MongoDB Configuration
-          MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
-          MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
-          
-          # Backend Configuration
-          NODE_ENV=${{ secrets.NODE_ENV }}
-          PORT=${{ secrets.PORT }}
-          MONGODB_URI=${{ secrets.MONGODB_URI }}
-          
-          # Application Configuration
-          APP_NAME=${{ secrets.APP_NAME }}
-          EOF
-          
-          # Ensure Docker and docker-compose are installed
+          mv /tmp/.env /opt/docker-project/.env
           if ! command -v docker &> /dev/null; then
-            echo 'Installing Docker...'
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
             sudo usermod -aG docker ekowfirmino
             rm get-docker.sh
           fi
-          
           if ! command -v docker-compose &> /dev/null; then
-            echo 'Installing Docker Compose...'
-            sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+              -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
-          
-          # Deploy the application
           cd /opt/docker-project
           docker-compose down
           docker-compose up -d --build
           docker image prune -f
-          
-          echo 'Deployment completed successfully!'
-        "
+        '
 
     - name: Health Check
       run: |
