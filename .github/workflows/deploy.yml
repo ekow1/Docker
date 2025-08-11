@@ -14,9 +14,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create .env file
+    - name: Setup SSH and upload .env
       run: |
-        cat > .env <<EOF
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+
+        # Write private key to file from secret
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+
+        # Start ssh-agent and add key (passphrase if any)
+        eval "$(ssh-agent -s)"
+        echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_ed25519
+
+        # Add server to known hosts to avoid prompt
+        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
+
+        # Test ssh connection
+        ssh -o StrictHostKeyChecking=no -v ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
+
+        # Create .env file locally
+        cat > .env << 'EOF'
         MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
         MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
         NODE_ENV=${{ secrets.NODE_ENV }}
@@ -25,18 +43,7 @@ jobs:
         APP_NAME=${{ secrets.APP_NAME }}
         EOF
 
-    - name: Setup SSH and deploy file
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-
-        eval "$(ssh-agent -s)"
-        ssh-add ~/.ssh/id_ed25519
-
-        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
-
-        # Now send the .env file
+        # Upload .env to VPS using ssh-agent (no -i here)
         cat .env | ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
 
     - name: Deploy
