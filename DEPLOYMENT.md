@@ -100,10 +100,13 @@ sudo ufw --force enable
 Add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
 
 #### Required Secrets:
-- `VPS_HOST`: Your VPS IP address or domain
-- `VPS_USER`: SSH username (usually `root` or your username)
-- `VPS_SSH_KEY`: Your private SSH key for accessing the VPS
+- `VPS_SSH_KEY`: Your private SSH key content (id_ed25519 key)
 - `SSH_PASSPHRASE`: Your SSH key passphrase (if your key has one)
+
+**Note**: The workflow is configured for:
+- VPS Host: `gcp.ekowlabs.space`
+- VPS User: `ekowfirmino`
+- SSH Key: `id_ed25519`
 
 #### Environment Variables (Secrets):
 - `MONGO_INITDB_ROOT_USERNAME`: MongoDB root username (e.g., "admin")
