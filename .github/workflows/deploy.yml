@@ -14,26 +14,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH and upload .env
+    - name: Setup SSH and deploy
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-
-        # Write private key to file from secret
         echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
 
-        # Start ssh-agent and add key (passphrase if any)
         eval "$(ssh-agent -s)"
         echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_ed25519
 
-        # Add server to known hosts to avoid prompt
         ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
-        # Test ssh connection
-        ssh -o StrictHostKeyChecking=no -v ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
+        # Test connection
+        ssh -o StrictHostKeyChecking=no ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
 
-        # Create .env file locally
+        # Upload .env file
         cat > .env << 'EOF'
         MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
         MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
@@ -43,12 +39,10 @@ jobs:
         APP_NAME=${{ secrets.APP_NAME }}
         EOF
 
-        # Upload .env to VPS using ssh-agent (no -i here)
         cat .env | ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
 
-    - name: Deploy
-      run: |
-        ssh ekowfirmino@gcp.ekowlabs.space '
+        # Run deployment commands via SSH
+        ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "
           sudo mkdir -p /opt/docker-project
           sudo chown ekowfirmino:ekowfirmino /opt/docker-project
           if [ ! -d /opt/docker-project/.git ]; then
@@ -64,15 +58,14 @@ jobs:
             rm get-docker.sh
           fi
           if ! command -v docker-compose &> /dev/null; then
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
-              -o /usr/local/bin/docker-compose
+            sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
           cd /opt/docker-project
           docker-compose down
           docker-compose up -d --build
           docker image prune -f
-        '
+        "
 
     - name: Health Check
       run: |
