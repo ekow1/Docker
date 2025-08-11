@@ -46,7 +46,7 @@ jobs:
           sudo mkdir -p /opt/docker-project
           sudo chown ekowfirmino:ekowfirmino /opt/docker-project
           if [ ! -d /opt/docker-project/.git ]; then
-            cd /opt/docker-project && git clone https://github.com/ekowfirmino/docker.git .
+            cd /opt/docker-project && git clone https://github.com/ekow1/Docker.git .
           else
             cd /opt/docker-project && git pull origin main
           fi
