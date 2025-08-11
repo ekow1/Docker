@@ -1,0 +1,21 @@
+{
+  "name": "docker-mongo-backend",
+  "version": "1.0.0",
+  "description": "Simple Node.js and Hono app with MongoDB",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["node", "hono", "mongodb", "docker"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "hono": "^4.0.0",
+    "mongodb": "^6.3.0",
+    "dotenv": "^16.3.1",
+    "@hono/node-server": "^1.8.0"
+  }
+}
