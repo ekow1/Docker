@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         # Test connection
         ssh -o StrictHostKeyChecking=no ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
 
-        # Upload .env file
+        # Create .env file with expanded secrets (no quotes to allow expansion)
         cat > .env << 'EOF'
         MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
         MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
@@ -39,32 +39,41 @@ jobs:
         APP_NAME=${{ secrets.APP_NAME }}
         EOF
 
+        # Upload .env to VPS
         cat .env | ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
 
-        # Run deployment commands via SSH
-        ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "
-          sudo mkdir -p /opt/docker-project
-          sudo chown ekowfirmino:ekowfirmino /opt/docker-project
-          if [ ! -d /opt/docker-project/.git ]; then
-            cd /opt/docker-project && git clone https://github.com/ekow1/Docker.git .
+        # Run deployment commands on VPS
+        ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space bash -e << 'SSH_COMMANDS'
+          cd /home/ekowfirmino
+
+          if [ ! -d /home/ekowfirmino/docker/.git ]; then
+            echo "Cloning repo for the first time..."
+            git clone https://github.com/ekowfirmino/docker.git /home/ekowfirmino/docker
           else
-            cd /opt/docker-project && git pull origin main
+            echo "Pulling latest changes..."
+            cd /home/ekowfirmino/docker
+            git pull origin main
           fi
-          mv /tmp/.env /opt/docker-project/.env
+
+          mv /tmp/.env /home/ekowfirmino/docker/.env
+
           if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
             sudo usermod -aG docker ekowfirmino
             rm get-docker.sh
           fi
+
           if ! command -v docker-compose &> /dev/null; then
-            sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose
+            echo "Installing Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
-          cd /opt/docker-project
+
+          cd /home/ekowfirmino/docker
           docker-compose down
           docker-compose up -d --build
           docker image prune -f
-        "
-
+        SSH_COMMANDS 
  
