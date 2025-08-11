@@ -33,25 +33,8 @@ jobs:
     - name: Add VPS to known hosts
       run: ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
-    - name: Create .env file with secrets
-      run: |
-        echo "# MongoDB Configuration" > .env
-        echo "MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" >> .env
-        echo "MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" >> .env
-        echo "" >> .env
-        echo "# Backend Configuration" >> .env
-        echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
-        echo "PORT=${{ secrets.PORT }}" >> .env
-        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
-        echo "" >> .env
-        echo "# Application Configuration" >> .env
-        echo "APP_NAME=${{ secrets.APP_NAME }}" >> .env
-
     - name: Deploy to VPS
       run: |
-        # Copy .env file to VPS
-        scp .env ekowfirmino@gcp.ekowlabs.space:/tmp/
-        
         # Setup project directory and deploy
         ssh ekowfirmino@gcp.ekowlabs.space "
           # Create project directory if it doesn't exist
@@ -69,8 +52,20 @@ jobs:
             git pull origin main
           fi
           
-          # Copy .env file to project directory
-          cp /tmp/.env /opt/docker-project/
+          # Create .env file from GitHub secrets
+          cat > /opt/docker-project/.env << 'EOF'
+          # MongoDB Configuration
+          MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          
+          # Backend Configuration
+          NODE_ENV=${{ secrets.NODE_ENV }}
+          PORT=${{ secrets.PORT }}
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          
+          # Application Configuration
+          APP_NAME=${{ secrets.APP_NAME }}
+          EOF
           
           # Ensure Docker and docker-compose are installed
           if ! command -v docker &> /dev/null; then
