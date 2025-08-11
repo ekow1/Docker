@@ -48,7 +48,7 @@ jobs:
 
           if [ ! -d /home/ekowfirmino/docker/.git ]; then
             echo "Cloning repo for the first time..."
-            git clone https://github.com/ekowfirmino/docker.git /home/ekowfirmino/docker
+            git clone https://github.com/ekow1/docker.git /home/ekowfirmino/docker
           else
             echo "Pulling latest changes..."
             cd /home/ekowfirmino/docker
