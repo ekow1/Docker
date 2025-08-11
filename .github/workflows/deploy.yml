@@ -29,6 +29,12 @@ jobs:
         
         # Add key to ssh-agent with passphrase
         echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_ed25519
+        
+        # Debug: Check if key was added
+        ssh-add -l
+        
+        # Debug: Test SSH connection with verbose output
+        ssh -v ekowfirmino@gcp.ekowlabs.space "echo 'SSH connection test successful'"
 
     - name: Add VPS to known hosts
       run: ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
