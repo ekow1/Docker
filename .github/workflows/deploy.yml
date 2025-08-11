@@ -20,15 +20,15 @@ jobs:
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
-        # Add SSH key to default location (using RSA key)
-        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
+        # Add SSH key to default location
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
         
         # Start ssh-agent
         eval "$(ssh-agent -s)"
         
         # Add key to ssh-agent with passphrase
-        echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_ed25519
         
         # Debug: Check if key was added
         ssh-add -l
