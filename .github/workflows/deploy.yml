@@ -14,14 +14,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH and known_hosts
+    - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         eval "$(ssh-agent -s)"
-        ssh-add ~/.ssh/id_ed25519
+        ssh-add - <<< "${{ secrets.SSH_PASSPHRASE }}"
         ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
 
     - name: Upload .env file
