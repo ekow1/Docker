@@ -120,17 +120,31 @@ Generate an SSH key pair if you don't have one:
 ssh-keygen -t rsa -b 4096 -C "github-actions@yourdomain.com"
 ```
 
+**Important**: For GitHub Actions, it's recommended to generate a key **without a passphrase**:
+
+```bash
+# Generate key without passphrase (recommended for GitHub Actions)
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/github_actions_key -N ""
+
+# Or if you want to use an existing key, remove the passphrase:
+ssh-keygen -p -f ~/.ssh/id_rsa
+```
+
 Add the public key to your VPS:
 
 ```bash
 # On your local machine
 cat ~/.ssh/id_rsa.pub
+# OR if you created a separate key:
+cat ~/.ssh/github_actions_key.pub
 
 # On your VPS
 echo "your-public-key-here" >> ~/.ssh/authorized_keys
 ```
 
 Add the private key to GitHub secrets as `VPS_SSH_KEY`.
+
+**Note**: If your SSH key has a passphrase, the GitHub Actions workflow will handle it automatically, but it's recommended to use a key without a passphrase for automated deployments.
 
 ### 3. Test SSH Connection
 

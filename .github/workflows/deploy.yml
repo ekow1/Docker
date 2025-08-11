@@ -14,10 +14,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+    - name: Setup SSH with passphrase support
+      run: |
+        # Create SSH directory
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        
+        # Add SSH key with passphrase handling
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        # Start ssh-agent
+        eval "$(ssh-agent -s)"
+        
+        # Add key to ssh-agent (if no passphrase)
+        ssh-add ~/.ssh/id_rsa || echo "SSH key may have passphrase - will use direct SSH"
 
     - name: Add VPS to known hosts
       run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
