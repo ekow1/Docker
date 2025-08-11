@@ -33,7 +33,7 @@ jobs:
         # Test ssh connection
         ssh -o StrictHostKeyChecking=no -v ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
 
-    - name: Upload .env file
+    - name: Create .env file
       run: |
         cat > .env <<EOF
         MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
@@ -43,7 +43,10 @@ jobs:
         MONGODB_URI=${{ secrets.MONGODB_URI }}
         APP_NAME=${{ secrets.APP_NAME }}
         EOF
-        scp .env ekowfirmino@gcp.ekowlabs.space:/tmp/.env
+
+    - name: Upload .env to VPS
+      run: |
+        scp -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -i $HOME/.ssh/id_ed25519 .env ekowfirmino@gcp.ekowlabs.space:/tmp/.env
 
     - name: Deploy
       run: |
