@@ -14,13 +14,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH with passphrase support
+    - name: Setup SSH
       run: |
         # Create SSH directory
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
-        # Add SSH key (using the provided key content from secrets)
+        # Add SSH key to default location
         echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         
@@ -50,10 +50,10 @@ jobs:
     - name: Deploy to VPS
       run: |
         # Copy .env file to VPS
-        scp -i ~/.ssh/id_ed25519 .env ekowfirmino@gcp.ekowlabs.space:/tmp/
+        scp .env ekowfirmino@gcp.ekowlabs.space:/tmp/
         
         # Setup project directory and deploy
-        ssh -i ~/.ssh/id_ed25519 ekowfirmino@gcp.ekowlabs.space "
+        ssh ekowfirmino@gcp.ekowlabs.space "
           # Create project directory if it doesn't exist
           sudo mkdir -p /opt/docker-project
           sudo chown ekowfirmino:ekowfirmino /opt/docker-project
