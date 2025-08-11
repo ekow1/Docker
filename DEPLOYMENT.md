@@ -103,6 +103,7 @@ Add these secrets to your GitHub repository (Settings → Secrets and variables 
 - `VPS_HOST`: Your VPS IP address or domain
 - `VPS_USER`: SSH username (usually `root` or your username)
 - `VPS_SSH_KEY`: Your private SSH key for accessing the VPS
+- `SSH_PASSPHRASE`: Your SSH key passphrase (if your key has one)
 
 #### Environment Variables (Secrets):
 - `MONGO_INITDB_ROOT_USERNAME`: MongoDB root username (e.g., "admin")
