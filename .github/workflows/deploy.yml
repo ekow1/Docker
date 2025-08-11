@@ -14,25 +14,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-
-        # Write private key to file from secret
-        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-
-        # Start ssh-agent and add key with passphrase
-        eval "$(ssh-agent -s)"
-        echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_ed25519
-
-        # Add server to known hosts to avoid prompt
-        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
-
-        # Test ssh connection
-        ssh -o StrictHostKeyChecking=no -v ekowfirmino@gcp.ekowlabs.space "echo SSH connection successful"
-
     - name: Create .env file
       run: |
         cat > .env <<EOF
@@ -44,9 +25,19 @@ jobs:
         APP_NAME=${{ secrets.APP_NAME }}
         EOF
 
-    - name: Upload .env to VPS
+    - name: Setup SSH and deploy file
       run: |
-        cat .env | ssh -o StrictHostKeyChecking=yes -i ~/.ssh/id_ed25519 ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/id_ed25519
+
+        ssh-keyscan -H gcp.ekowlabs.space >> ~/.ssh/known_hosts
+
+        # Now send the .env file
+        cat .env | ssh -o StrictHostKeyChecking=yes ekowfirmino@gcp.ekowlabs.space "cat > /tmp/.env"
 
     - name: Deploy
       run: |
